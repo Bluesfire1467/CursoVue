@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { GameStatus, type Pokemon, type PokemonListResponse } from '@/modules/pokemon/interfaces';
 import { pokemonApi } from '@/modules/pokemon/api/pokemonApi';
+import confetti from 'canvas-confetti';
 
 export const usePokemonGame = () => {
 
@@ -25,25 +26,41 @@ export const usePokemonGame = () => {
 
       return {
         name: pokemon.name,
-        id,
+        id: +id,
       };
     });
-
     return pokemonsArray.sort(() => Math.random() - 0.5);
   };
 
-  const getNextOptions = (howMany: number = 4) => {
+  const getNextRound = (howMany: number = 4) => {
     gameStatus.value = GameStatus.Playing;
     pokemonsoptions.value = pokemons.value.slice(0, howMany);
     pokemons.value = pokemons.value.slice(howMany);
   };
 
+  const checkAnswer = (id: number) => {
+    const hasWon = randonPokemon.value.id === id;
+
+    if (hasWon) {
+      gameStatus.value = GameStatus.Won;
+      confetti({
+        particleCount: 300,
+        spread: 150,
+        origin: { y: 0.6 },
+      });
+      return
+    }
+
+    gameStatus.value = GameStatus.Lost
+  };
+
+
   onMounted(async () => {
     // Espera unos segundos
-    await new Promise(r => setTimeout(r, 1000));
+    await new Promise(r => setTimeout(r, 100));
 
     pokemons.value = await getPokemons();
-    getNextOptions();
+    getNextRound();
 
   });
 
@@ -54,6 +71,7 @@ export const usePokemonGame = () => {
     randonPokemon,
 
     // Methods
-    getNextOptions,
+    getNextRound,
+    checkAnswer,
   };
 };
